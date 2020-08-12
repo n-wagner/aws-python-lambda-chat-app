@@ -1,32 +1,32 @@
 import os
 import time
 import logging
+import secrets
+import json
 from datetime import datetime
 import boto3
 import botocore
 import definitions
-import secrets
-import json
 from chat_utilities import _build_response, _build_response_detailed, _fetch_body, _send_to_connection
 
 logger = logging.getLogger("create_group_handler")
 logger.setLevel(logging.DEBUG)
 
 dynamodb = boto3.resource(
-  "dynamodb", 
+  "dynamodb",
   endpoint_url="http://localhost:8000" if os.environ.get('IS_OFFLINE') == "true" else None
 )
 
 action = "createGroup"
 
-def create_group (event, context):
+def create_group(event, context):
   """
-  Endpoint to create a chat group 
+  Endpoint to create a chat group
   """
   logger.info("Group creation via WebSocket")
-  logger.debug("event: {}".format(str(event)))
+  logger.debug("event: {}", str(event))
   connectionID = event["requestContext"].get("connectionId")
-  logger.debug("connectionID: {}".format(connectionID))
+  logger.debug("connectionID: {}", connectionID)
 
   # Validate that user is logged in
 
@@ -35,13 +35,13 @@ def create_group (event, context):
     ProjectionExpression=definitions.Connections.USERNAME,
     KeyConditionExpression=boto3.dynamodb.conditions.Key(definitions.Connections.CONNECTION_ID).eq(connectionID)
   )
-  logger.debug("response: {}".format(response))
+  logger.debug("response: {}", response)
   items = response.get("Items", [])
-  logger.debug("items: {}".format(items))
-  if (len(items) > 0):
+  logger.debug("items: {}", items)
+  if len(items) > 0:
     item = items[0]
   else:
-    logger.error("user password query returned not even an empty set items: {}".format(items))
+    logger.error("user password query returned not even an empty set items: {}", items)
     _send_to_connection(connectionID, _build_response_detailed(500, action, "Server error"), event)
     return _build_response(500, "Server error")
   if definitions.Connections.USERNAME not in item:
@@ -54,14 +54,14 @@ def create_group (event, context):
   body = _fetch_body(event, logger)
   for attribute in [definitions.Groups.NICKNAME, "users"]:
     if attribute not in body:
-      error_message = "Improper message format: `" + attribute + "' missing from message JSON"
+      error_message = "Improper message format: `{}' missing from message JSON".format(attribute)
       logger.debug(error_message)
       return _build_response(400, error_message)
-  
+
   nickname = body[definitions.Groups.NICKNAME]
   users = json.loads(body["users"])
-  logger.debug("nickname: '{}', username: '{}', users: '{}', users_type: {}".format(nickname, username, users, type(users)))
-    
+  logger.debug("nickname: '{}', username: '{}', users: '{}', users_type: {}", nickname, username, users, type(users))
+
   # Validate that all users exist
   users_table = dynamodb.Table(definitions.Users.TABLE_NAME)
   invalid_users = []
@@ -72,15 +72,15 @@ def create_group (event, context):
       continue
     response = users_table.query(
       ProjectionExpression="{}, {}".format(
-        definitions.Users.USERNAME, 
+        definitions.Users.USERNAME,
         definitions.Users.CONNECTION_ID
       ),
       KeyConditionExpression=boto3.dynamodb.conditions.Key(definitions.Users.USERNAME).eq(user)
     )
-    logger.debug("response: {}".format(response))
+    logger.debug("response: {}", response)
     items = response.get("Items", [])
-    logger.debug("items: {}".format(items))
-    if (len(items) > 0):
+    logger.debug("items: {}", items)
+    if len(items) > 0:
       item = items[0]
     else:
       invalid_users.append(user)
@@ -90,7 +90,7 @@ def create_group (event, context):
     if definitions.Users.USERNAME not in item:
       invalid_users.append(user)
 
-  logger.debug("Invalid users: {}".format(invalid_users))
+  logger.debug("Invalid users: {}", invalid_users)
 
   if len(invalid_users) > 0:
     _send_to_connection(connectionID, _build_response_detailed(400, action, invalid_users), event)
@@ -99,9 +99,9 @@ def create_group (event, context):
   groups_table = dynamodb.Table(definitions.Groups.TABLE_NAME)
   group_id = secrets.token_urlsafe(16)
   timestamp = time.time_ns()
-  logger.debug("Generated group_id: {} Timestamp: {}".format(group_id, timestamp))
-  logger.debug("Users before if: {}".format(users))
-  if (len(users) > 0):
+  logger.debug("Generated group_id: {} Timestamp: {}", group_id, timestamp)
+  logger.debug("Users before if: {}", users)
+  if len(users) > 0:
     while True:
       try:
         groups_table.put_item(
@@ -119,18 +119,18 @@ def create_group (event, context):
           )
         )
         break
-      except botocore.exceptions.ClientError as e:
+      except botocore.exceptions.ClientError as cle:
         # ConditionalCheckFailedException is okay, rest are not
         logger.debug("Exception raised")
-        if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
-          logger.debug("Unexpected exception: {}".format(e))
+        if cle.response['Error']['Code'] != 'ConditionalCheckFailedException':
+          error_message = "Unexpected exception: {}".format(cle)
+          logger.debug(error_message)
           _send_to_connection(connectionID, _build_response_detailed(500, action, "Server Error"), event)
-          return _build_response(500, "Unexpected exception: {}".format(e))
-        else:
-          group_id = secrets.token_urlsafe(16)
-          logger.debug("Regenerated group_id: {}".format(group_id))
-          continue
-    logger.debug("Users before iteration: {}".format(users))
+          return _build_response(500, error_message)
+        group_id = secrets.token_urlsafe(16)
+        logger.debug("Regenerated group_id: {}", group_id)
+        continue
+    logger.debug("Users before iteration: {}", users)
     for user in users:
       try:
         groups_table.put_item(
@@ -147,9 +147,9 @@ def create_group (event, context):
             definitions.Groups.USERNAME
           )
         )
-      except botocore.exceptions.ClientError as e:
+      except botocore.exceptions.ClientError as cle:
         # ConditionalCheckFailedException is okay, rest are not
-        logger.debug(e)
+        logger.debug(cle)
         logger.debug("Exception raised - there should not be an issue adding users")
         _send_to_connection(connectionID, _build_response_detailed(500, action, "Server Error"), event)
         return _build_response(500, "Error adding additional users")
@@ -184,16 +184,18 @@ def create_group (event, context):
         definitions.Messages.TIMESTAMP
       )
     )
-  except botocore.exceptions.ClientError as e:
+  except botocore.exceptions.ClientError:
     # Should be no errors as this is the first message to be inserted
     logger.debug("Exception raised - error inserting init message")
     _send_to_connection(connectionID, _build_response_detailed(500, action, "Server Error"), event)
     return _build_response(500, "Error inserting init message")
-    
+
   # Send init message to all clients
 
   lambda_client = boto3.client("lambda")
-  message[definitions.Messages.TIMESTAMP] = datetime.fromtimestamp(message[definitions.Messages.TIMESTAMP] // 1000000000).strftime('%m/%d/%Y %H:%M')
+  message[definitions.Messages.TIMESTAMP] = datetime.fromtimestamp(
+    message[definitions.Messages.TIMESTAMP] // 1000000000
+  ).strftime('%m/%d/%Y %H:%M')
   params = {
     "body": {
       "all_messages": [message]
@@ -204,12 +206,12 @@ def create_group (event, context):
     InvocationType="RequestResponse",
     Payload=json.dumps(params)
   )
-  logger.debug("invoke_response: {}".format(invoke_response))
+  logger.debug("invoke_response: {}", invoke_response)
   payload = invoke_response['Payload'].read().decode()
-  logger.debug("Payload: '{}' type: {}".format(payload, type(payload)))
+  logger.debug("Payload: '{}' type: {}", payload, type(payload))
   payload_dict = json.loads(payload)
   side_message_html = payload_dict['body']
-  logger.debug("online_users: {}".format(online_users))
+  logger.debug("online_users: {}", online_users)
   for online_user in online_users:
     _send_to_connection(online_user, _build_response_detailed(200, "init", side_message_html), event)
 
@@ -217,6 +219,3 @@ def create_group (event, context):
 
   _send_to_connection(connectionID, _build_response_detailed(200, action, "Group Created"), event)
   return _build_response(200, message)
-
-
-

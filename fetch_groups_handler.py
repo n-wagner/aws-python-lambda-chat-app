@@ -1,12 +1,10 @@
 import os
 import json
-import time
 import logging
 from datetime import datetime
 import boto3
-import botocore
 import definitions
-from chat_utilities import _build_response, _build_response_detailed, _fetch_body, _send_to_connection
+from chat_utilities import _build_response, _build_response_detailed, _send_to_connection
 
 logger = logging.getLogger("fetch_groups_handler")
 logger.setLevel(logging.DEBUG)
@@ -18,14 +16,14 @@ dynamodb = boto3.resource(
 
 action = "fetchGroups"
 
-def fetch_groups (event, context):
+def fetch_groups(event, context):
   """
   Fetch groups for side bar endpoint
   """
   logger.info("fetch groups request via WebSocket")
-  logger.debug("event: {}".format(str(event)))
+  logger.debug("event: {}", str(event))
   connectionID = event["requestContext"].get("connectionId")
-  logger.debug("connectionID: {}".format(connectionID))
+  logger.debug("connectionID: {}", connectionID)
 
   # Validate that user is logged in
   connections_table = dynamodb.Table(definitions.Connections.TABLE_NAME)
@@ -33,13 +31,13 @@ def fetch_groups (event, context):
     ProjectionExpression=definitions.Connections.USERNAME,
     KeyConditionExpression=boto3.dynamodb.conditions.Key(definitions.Connections.CONNECTION_ID).eq(connectionID)
   )
-  logger.debug("response: {}".format(response))
+  logger.debug("response: {}", response)
   items = response.get("Items", [])
-  logger.debug("items: {}".format(items))
-  if (len(items) > 0):
+  logger.debug("items: {}", items)
+  if len(items) > 0:
     item = items[0]
   else:
-    logger.error("user password query returned not even an empty set items: {}".format(items))
+    logger.error("user password query returned not even an empty set items: {}", items)
     _send_to_connection(connectionID, _build_response_detailed(500, action, "Server error"), event)
     return _build_response(500, "Server error")
   if definitions.Connections.USERNAME not in item:
@@ -54,10 +52,10 @@ def fetch_groups (event, context):
     FilterExpression=boto3.dynamodb.conditions.Attr(definitions.Groups.USERNAME).eq(username)
   )
   items = response.get("Items", [])
-  logger.debug("items: {}".format(str(items)))
+  logger.debug("items: {}", str(items))
   # How many groups there are
   item_len = len(items)
-  logger.debug("groups: {}".format(item_len))
+  logger.debug("groups: {}", item_len)
   last_messages = []
   # Query Last Message for each
   for group in items:
@@ -73,9 +71,9 @@ def fetch_groups (event, context):
       ScanIndexForward=False
     )
     items = response.get("Items", [])
-    logger.debug("items: {}".format(str(items)))
+    logger.debug("items: {}", str(items))
     message = items[0]
-    logger.debug("message: {}".format(str(message)))
+    logger.debug("message: {}", str(message))
     last_messages.append(
       {
         definitions.Messages.USERNAME: message[definitions.Messages.USERNAME] if definitions.Messages.USERNAME in message else None,
@@ -86,9 +84,9 @@ def fetch_groups (event, context):
         # definitions.Messages.INIT: message[definitions.Messages.INIT] if definitions.Messages.INIT in message else False
       }
     )
-  logger.debug("last_messages before sort: {}".format(last_messages))
+  logger.debug("last_messages before sort: {}", last_messages)
   last_messages.sort(key=lambda item: item[definitions.Messages.TIMESTAMP], reverse=True)
-  logger.debug("last_messages after sort: {}".format(last_messages))
+  logger.debug("last_messages after sort: {}", last_messages)
   # Render messages
   params = {
     "body": {
@@ -102,8 +100,8 @@ def fetch_groups (event, context):
     Payload=json.dumps(params)
   )
   payload = invoke_response['Payload'].read().decode()
-  logger.debug("Payload: '{}' type: {}".format(payload, type(payload)))
+  logger.debug("Payload: '{}' type: {}", payload, type(payload))
   payload_dict = json.loads(payload)
-  logger.debug("Payload_dict: '{}' type: {}".format(payload_dict, type(payload_dict)))
+  logger.debug("Payload_dict: '{}' type: {}", payload_dict, type(payload_dict))
   _send_to_connection(connectionID, _build_response_detailed(200, action, payload_dict["body"]), event)
   return _build_response(200, "Groups fetched")

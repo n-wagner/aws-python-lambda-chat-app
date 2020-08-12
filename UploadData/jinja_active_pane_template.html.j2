@@ -1,41 +1,75 @@
-<div class="group-region" id="{{ groupID }}">
-  <div style="font-size: 24px; font-weight: bold;">{{ nickname }}</div>
-  <div style="font-size: 12px; font-weight: normal;">{% for user in group_users %}{{ user }}; {% endfor %}</div>
-  <div {% if left %}hidden disabled{% endif %} class="compose-area" style="margin-right: 15px; margin-bottom: 35px;"> <div class="btn btn-default negative-button" onclick="leaveGroup();"><i
-    class="fa fa-sign-out"></i> Leave Group</div></div>
+<div
+  class="group-region"
+  id="{{ groupID }}"
+>
+  <div style="font-size: 24px; font-weight: bold;">
+    {{ nickname }}
+  </div>
+  <div style="font-size: 12px; font-weight: normal;">
+    {% for user in group_users %}
+      {{ user }};
+    {% endfor %}
+  </div>
+  <div
+    {% if left %}
+      hidden
+      disabled
+    {% endif %}
+    class="compose-area"
+    style="margin-right: 15px; margin-bottom: 35px;"
+  >
+    <div class="btn btn-default negative-button" onclick="leaveGroup();">
+      <i class="fa fa-sign-out"></i>
+      Leave Group
+    </div>
+  </div>
 </div>
 <div>
-  <div class="slimScrollDiv"
-    style="position: relative; overflow: hidden; width: auto; height: 475px;">
+  <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 475px;">
     <div class="message-list-wrapper" style="overflow-y: auto; width: auto; height: 475px;">
       <ul class="message-list">
-        <li class="text-center"> <div class="btn btn-default" onclick="loadMoreMessages();">Load More Messages</div></li>
+        <li class="text-center">
+          <div class="btn btn-default" onclick="loadMoreMessages();">
+            Load More Messages
+          </div>
+        </li>
         {% for message_group in all_messages %}
           {% if message_group[0]['username'] is None %}
-          <li class="text-center message-item active-chat-message" style="font-size: 12px; font-style: italic; color: green;">{{ message_group[0]['content'] }}</li>
+            <li class="text-center message-item active-chat-message" style="font-size: 12px; font-style: italic; color: green;">
+              {{ message_group[0]['content'] }}
+            </li>
           {% else %}
-            {% if message_group[0]['username'] == current_user %}
-            <li class= "right active-chat-message"> 
-            {% else %}
-            <li class= "left active-chat-message"> 
-            {% endif %}
-              <span class="username">{{ message_group[0]['username'] }}</span> 
-              <small class="timestamp"> 
-                {{ message_group[0]['username'] }} <br>
-                <iclass="fa fa-clock-o"></i>
-                {{ message_group[0]['sendTimestamp'] }} 
-              </small> 
+            <li
+              {% if message_group[0]['username'] == current_user %}
+                class="right active-chat-message"
+              {% else %}
+                class="left active-chat-message"
+              {% endif %}
+            >
+              <span class="username">
+                {{ message_group[0]['username'] }}
+              </span>
+              <small class="timestamp">
+                {{ message_group[0]['username'] }}
+                <br>
+                <i class="fa fa-clock-o"></i>
+                {{ message_group[0]['sendTimestamp'] }}
+              </small>
               <div class="body">
-                <div class="message-item message well well-sm">{{ message_group[0]['content'] }}</div>
+                <div class="message-item message well well-sm">
+                  {{ message_group[0]['content'] }}
+                </div>
                 {% for message in message_group %}
-                {% if not loop.first %}
-                <div class="clearfix"></div>
-                <div class="message-item message well well-sm">{{ message['content'] }}</div>
-                {% endif %}
+                  {% if not loop.first %}
+                    <div class="clearfix"></div>
+                    <div class="message-item message well well-sm">
+                      {{ message['content'] }}
+                    </div>
+                  {% endif %}
                 {% endfor %}
               </div>
+            </li>
           {% endif %}
-          </li>
         {% endfor %}
       </ul>
     </div>
@@ -49,13 +83,29 @@
   <div class="compose-box">
     <div class="row">
       <div class="col-xs-12 mg-btm-10">
-        <textarea {% if left %}disabled{% endif %} id="btn-input" class="form-control input-sm"
-          placeholder="Type your message here..." onkeydown="keyFunction(event);"></textarea></div>
-      <div class="col-xs-8"> 
+        <textarea
+          {% if left %}
+            disabled
+          {% endif %}
+          id="btn-input"
+          class="form-control input-sm"
+          placeholder="Type your message here..."
+          onkeydown="keyFunction(event);"
+        ></textarea>
       </div>
-      <div class="col-xs-4"> 
-        <button {% if left %}disabled{% endif %} class="btn btn-green btn-sm pull-right" onclick="sendMessage(event);"> <i
-            class="fa fa-location-arrow"></i> Send </button></div>
+      <div class="col-xs-8"></div>
+      <div class="col-xs-4">
+        <button
+          {% if left %}
+            disabled
+          {% endif %}
+          class="btn btn-green btn-sm pull-right"
+          onclick="sendMessage(event);"
+        >
+          <i class="fa fa-location-arrow"></i>
+           Send
+        </button>
+      </div>
     </div>
   </div>
   <script>

@@ -1,0 +1,38 @@
+{% for message_group in all_messages %}
+  {% if message_group[0]['username'] is None %}
+    <li class="text-center message-item active-chat-message" style="font-size: 12px; font-style: italic; color: green;">
+      {{ message_group[0]['content'] }}
+    </li>
+  {% else %}
+    <li
+      {% if message_group[0]['username'] == current_user %}
+        class= "right active-chat-message"
+      {% else %}
+        class= "left active-chat-message"
+      {% endif %}
+    >
+      <span class="username">
+        {{ message_group[0]['username'] }}
+      </span>
+      <small class="timestamp">
+        {{ message_group[0]['username'] }}
+        <br>
+        <i class="fa fa-clock-o"></i>
+        {{ message_group[0]['sendTimestamp'] }}
+      </small>
+      <div class="body">
+        <div class="message-item message well well-sm">
+          {{ message_group[0]['content'] }}
+        </div>
+        {% for message in message_group %}
+          {% if not loop.first %}
+            <div class="clearfix"></div>
+            <div class="message-item message well well-sm">
+              {{ message['content'] }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </li>
+  {% endif %}
+{% endfor %}
