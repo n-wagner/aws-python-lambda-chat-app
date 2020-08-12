@@ -1,23 +1,54 @@
 <h2>Create Group</h2>
 <div class="container">
-  <button class="addUser" onclick="addUser();">Add User</button>
+  <button class="addUser" onclick="addUser();">
+    Add User
+  </button>
 </div>
 <div class="container" id="main-container">
-  <label for="gName"><b>Group Name:</b></label>
-  <input type="text" placeholder="Enter group name" id="gName" required>
-  <p class="validation" hidden style="font-size: 11px; color: red;">Please enter a group name</p>
-  <p></p>
+  <label for="gName">
+    <b>Group Name:</b>
+  </label>
+  <input
+    type="text"
+    placeholder="Enter group name"
+    id="gName"
+    required
+  />
+  <p
+    class="validation"
+    hidden
+    style="font-size: 11px; color: red;"
+  >
+    Please enter a group name
+  </p>
   <div id="users">
     <div>
-      <label for="user1"><b>New Username:</b></label>
-      <input type="text" placeholder="Enter username" id="user1" required>
-      <p class="validation" hidden style="font-size: 11px; color: red;">Invalid username</p>
+      <label for="user1">
+        <b>New Username:</b>
+      </label>
+      <input
+        type="text"
+        placeholder="Enter username"
+        id="user1"
+        required
+      />
+      <p
+        class="validation"
+        hidden
+        style="font-size: 11px; color: red;"
+      >
+        Invalid username
+      </p>
     </div>
   </div>
 </div>
 <div class="container">
-  <button type="submit" class="submit" onclick="createGroup();">Create</button>
-  <button class="cancel" onclick="cancel();">Cancel</button>
+  <button type="submit" class="submit" onclick="createGroup();">
+    Create
+  </button>
+  <button class="cancel" onclick="cancel();">
+    Cancel
+  </button>
 </div>
 <style>
   body {font-family: Arial, Helvetica, sans-serif;}
@@ -62,7 +93,7 @@
     background-color: red;
     width: 12.5%;
   }
-  
+
   button:hover {
     opacity: 0.8;
   }

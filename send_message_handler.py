@@ -18,15 +18,15 @@ dynamodb = boto3.resource(
 
 action = "sendMessage"
 
-def send_message (event, context):
+def send_message(event, context):
   """
   Forward a message to all appropraite clients
   """
-  logger.debug("environ var: {} type: {}".format(os.environ.get('IS_OFFLINE'), type(os.environ.get('IS_OFFLINE'))))
+  logger.debug("environ var: {} type: {}", os.environ.get('IS_OFFLINE'), type(os.environ.get('IS_OFFLINE')))
   logger.info("Message sent via WebSocket")
-  logger.debug("event: {}".format(str(event)))
+  logger.debug("event: {}", str(event))
   connectionID = event["requestContext"].get("connectionId")
-  logger.debug("connectionID: {}".format(connectionID))
+  logger.debug("connectionID: {}", connectionID)
 
   # Validate that user is logged in
 
@@ -35,13 +35,13 @@ def send_message (event, context):
     ProjectionExpression=definitions.Connections.USERNAME,
     KeyConditionExpression=boto3.dynamodb.conditions.Key(definitions.Connections.CONNECTION_ID).eq(connectionID)
   )
-  logger.debug("response: {}".format(response))
+  logger.debug("response: {}", response)
   items = response.get("Items", [])
-  logger.debug("items: {}".format(items))
-  if (len(items) > 0):
+  logger.debug("items: {}", items)
+  if len(items) > 0:
     item = items[0]
   else:
-    logger.error("user password query returned not even an empty set items: {}".format(items))
+    logger.error("user password query returned not even an empty set items: {}", items)
     _send_to_connection(connectionID, _build_response_detailed(500, action, "Server error"), event)
     return _build_response(500, "Server error")
   if definitions.Connections.USERNAME not in item:
@@ -54,14 +54,14 @@ def send_message (event, context):
   body = _fetch_body(event, logger)
   for attribute in [definitions.Messages.CONTENT, definitions.Messages.GROUP_ID]:
     if attribute not in body:
-      error_message = "Improper message format: `" + attribute + "' missing from message JSON"
+      error_message = "Improper message format: `{}' missing from message JSON".format(attribute)
       logger.debug(error_message)
       return _build_response(400, error_message)
-  
+
   content = body[definitions.Messages.CONTENT]
   group = body[definitions.Messages.GROUP_ID]
 
-  logger.debug("username: '{}', content: '{}', group: '{}'".format(username, content, group))
+  logger.debug("username: '{}', content: '{}', group: '{}'", username, content, group)
 
   # Validate that user is in group before sending message
 
@@ -70,11 +70,11 @@ def send_message (event, context):
     ProjectionExpression="{}, {}".format(definitions.Groups.USERNAME, definitions.Groups.NICKNAME),
     KeyConditionExpression=boto3.dynamodb.conditions.Key(definitions.Groups.GROUP_ID).eq(group)
   )
-  logger.debug("response: {}".format(response))
+  logger.debug("response: {}", response)
   users = response.get("Items", [])
   # logger.debug("items: {}".format(items))
   # users = items # [item[definitions.Groups.USERNAME] for item in items if definitions.Groups.USERNAME in item]
-  logger.debug("users: {}".format(users))
+  logger.debug("users: {}", users)
 
   ok = False
   nickname = None
@@ -85,18 +85,18 @@ def send_message (event, context):
         nickname = user[definitions.Groups.NICKNAME]
         break
     else:
-      logger.error("Invalid record {}".format(user))
+      logger.error("Invalid record {}", user)
       _send_to_connection(connectionID, _build_response_detailed(500, action, "Internal server error"), event)
       return _build_response(500, "Internal Server Error")
   if not ok:
-    logger.debug("User: {} not a member of {} users: {}".format(username, group, users))
+    logger.debug("User: {} not a member of {} users: {}", username, group, users)
     _send_to_connection(connectionID, _build_response_detailed(403, action, "user not a member of this group"), event)
     return _build_response(403, "user not member of group")
 
   messages_table = dynamodb.Table(definitions.Messages.TABLE_NAME)
   while True:
     timestamp = time.time_ns()
-    logger.debug("Timestamp: {}".format(timestamp))
+    logger.debug("Timestamp: {}", timestamp)
     try:
       messages_table.put_item(
         Item={
@@ -113,14 +113,14 @@ def send_message (event, context):
         )
       )
       break
-    except botocore.exceptions.ClientError as e:
-      # ConditionalCheckFailedException is okay, rest are not
+    except botocore.exceptions.ClientError as cle:
+      # ConditionalCheckFailedException is okay (collision with timestamp), rest are not
       logger.debug("Exception raised")
-      if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
+      if cle.response['Error']['Code'] != 'ConditionalCheckFailedException':
+        # TODO: Handle gracefully with a 500 response
         raise
-      else:
-        continue
-  
+      continue
+
   # Query all the users for their connectionIDs
   users_table = dynamodb.Table(definitions.Users.TABLE_NAME)
   user_connIDs = {}
@@ -129,21 +129,22 @@ def send_message (event, context):
       ProjectionExpression=definitions.Users.CONNECTION_ID,
       KeyConditionExpression=boto3.dynamodb.conditions.Key(definitions.Users.USERNAME).eq(user[definitions.Users.USERNAME])
     )
-    logger.debug("response: {}".format(response))
+    logger.debug("response: {}", response)
     items = response.get("Items", [])
-    logger.debug("items: {}".format(items))
-    if (len(items) > 0):
+    logger.debug("items: {}", items)
+    if len(items) > 0:
       item = items[0]
     else:
-      logger.error("user connection query returned not even an empty set items: {}".format(items))
+      logger.error("user connection query returned not even an empty set items: {}", items)
       return _build_response(500, "Server error")
     if definitions.Users.CONNECTION_ID in item:
       conn_ID = item[definitions.Users.CONNECTION_ID]
       if conn_ID is not None:
         user_connIDs[user[definitions.Users.USERNAME]] = conn_ID
-  logger.debug("user_connIDs: {}".format(user_connIDs))
+  logger.debug("user_connIDs: {}", user_connIDs)
   lambda_client = boto3.client("lambda")
   # Cycle through connectionID's sending out memo
+  # TODO: send out to yourself first to lower latency for current user
   message = {
     definitions.Messages.USERNAME: username,
     definitions.Messages.GROUP_ID: group,
@@ -164,12 +165,12 @@ def send_message (event, context):
       InvocationType="RequestResponse",
       Payload=json.dumps(params)
     )
-    logger.debug("invoke_response: {}".format(invoke_response))
+    logger.debug("invoke_response: {}", invoke_response)
     payload = invoke_response['Payload'].read().decode()
-    logger.debug("Payload: '{}' type: {}".format(payload, type(payload)))
+    logger.debug("Payload: '{}' type: {}", payload, type(payload))
     payload_dict = json.loads(payload)
     active_message_html = payload_dict['body']
-    logger.debug("Payload_dict: '{}' type: {}".format(payload_dict, type(payload_dict)))
+    logger.debug("Payload_dict: '{}' type: {}", payload_dict, type(payload_dict))
     params = {
       "body": {
         "all_messages": [message]
@@ -180,12 +181,12 @@ def send_message (event, context):
       InvocationType="RequestResponse",
       Payload=json.dumps(params)
     )
-    logger.debug("invoke_response: {}".format(invoke_response))
+    logger.debug("invoke_response: {}", invoke_response)
     payload = invoke_response['Payload'].read().decode()
-    logger.debug("Payload: '{}' type: {}".format(payload, type(payload)))
+    logger.debug("Payload: '{}' type: {}", payload, type(payload))
     payload_dict = json.loads(payload)
     side_message_html = payload_dict['body']
-    logger.debug("item: {} body: {}".format(item, side_message_html))
+    logger.debug("item: {} body: {}", item, side_message_html)
     data = {
       "action": action,
       "statusCode": 200,
@@ -195,7 +196,7 @@ def send_message (event, context):
         "activeMessage": active_message_html
       }
     }
-    logger.debug("Data: {}".format(data))
+    logger.debug("Data: {}", data)
     for user_individual_conn_ID in user_connIDs[user]:
       _send_to_connection(user_individual_conn_ID, data, event)
 

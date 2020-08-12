@@ -8,7 +8,7 @@ logger = logging.getLogger("connection_handler")
 logger.setLevel(logging.DEBUG)
 
 dynamodb = boto3.resource(
-  "dynamodb", 
+  "dynamodb",
   endpoint_url="http://localhost:8000" if os.environ.get('IS_OFFLINE') == "true" else None
 )
 
@@ -18,8 +18,8 @@ def connection_manager (event, context):
   Handles CONNECT and DISCONNECT for WebSocket
   """
   connectionID = event["requestContext"].get("connectionId")
-  logger.debug("event: {}".format(str(event)))
-  logger.debug("connectionID: {}".format(connectionID))
+  logger.debug("event: {}", str(event))
+  logger.debug("connectionID: {}", connectionID)
 
   if event["requestContext"]["eventType"] == "CONNECT":
     logger.info("Incoming connect request")
@@ -32,8 +32,7 @@ def connection_manager (event, context):
       }
     )
     return _build_response(200, "Connection success")
-
-  elif event["requestContext"]["eventType"] == "DISCONNECT":
+  if event["requestContext"]["eventType"] == "DISCONNECT":
     logger.info("Incoming disconnect request")
 
     # Remove the connection from the database
@@ -48,7 +47,7 @@ def connection_manager (event, context):
     # Removes connectionID from userTable on abrupt disconnect (no logout)
     if result['ResponseMetadata']['HTTPStatusCode'] == 200 and 'Attributes' in result:
       if definitions.Connections.USERNAME in result['Attributes']:
-        if result['Attributes'][definitions.Connections.USERNAME] != None:
+        if result['Attributes'][definitions.Connections.USERNAME] is not None:
           username = result['Attributes'][definitions.Connections.USERNAME]
           users_table = dynamodb.Table(definitions.Users.TABLE_NAME)
           local_var = ":connID"
@@ -65,12 +64,10 @@ def connection_manager (event, context):
             },
             ReturnValues="UPDATED_NEW"
           )
-          logger.debug("Updated result: {}".format(result))
+          logger.debug("Updated result: {}", result)
     else:
-      logger.error("Connections table not properly updated - result: {}".format(result))
+      logger.error("Connections table not properly updated - result: {}", result)
       return _build_response(500, "Internal server error")
     return _build_response(200, "Disconnection success")
-
-  else:
-    logger.error("Unexpected eventType for connection manager")
-    return _build_response(500, "Unexpected eventType")
+  logger.error("Unexpected eventType for connection manager")
+  return _build_response(500, "Unexpected eventType")

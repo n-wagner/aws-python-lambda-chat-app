@@ -6,10 +6,10 @@ logger = logging.getLogger("ping_handler")
 logger.setLevel(logging.DEBUG)
 
 
-def ping (event, context):
+def ping(event, context):
     """
     Basic connection check
     """
     logger.info("Ping requested.")
-    logger.debug("OS Environ: {}".format(os.environ))
+    logger.debug("OS Environ: {}", os.environ)
     return _build_response(200, "PONG!")

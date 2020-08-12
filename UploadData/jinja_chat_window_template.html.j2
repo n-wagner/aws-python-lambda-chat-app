@@ -1,6 +1,6 @@
 <div id="snippetContent">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>
   <div class="container">
     <div class="row">
       <div class="col-sm-12">
@@ -8,46 +8,61 @@
           <div class="panel-body chat">
             <div class="row chat-wrapper">
               <div class="col-md-4">
-                <div class="compose-area"> <div class="btn btn-default" onclick="logout();"><i
-                  class="fa fa-sign-out negative-button"></i> Logout</div></div>
-                <div class="compose-area"> <div class="btn btn-default" onclick="getCreateGroup();"><i
-                      class="fa fa-edit"></i> New Chat</div></div>
+                <div class="compose-area">
+                  <div class="btn btn-default" onclick="logout();">
+                    <i class="fa fa-sign-out negative-button"></i>
+                    Logout
+                  </div>
+                </div>
+                <div class="compose-area">
+                  <div class="btn btn-default" onclick="getCreateGroup();">
+                    <i class="fa fa-edit"></i>
+                    New Chat
+                  </div>
+                </div>
                 <div>
-                  <div class="slimScrollDiv"
-                    style="position: relative; overflow: hidden; width: auto; height: 550px;">
+                  <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 550px;">
                     <div class="chat-list-wrapper" style="overflow-y: auto; width: auto; height: 550px;">
                       <ul class="chat-list">
                         {% for message in all_messages %}
-                          <li class="side-bar-message"> 
-                            <div class="body" id={{ message["groupID"] }} onclick="loadGroup(event);"> 
-                              <div class="header interior-elem"> 
-                                <span class="username interior-elem">{{ message["nickname"] }}</span> 
-                                <small class="timestamp text-muted interior-elem"> 
+                          <li class="side-bar-message">
+                            <div
+                              class="body"
+                              id="{{ message['groupID'] }}"
+                              onclick="loadGroup(event);"
+                            >
+                              <div class="header interior-elem">
+                                <span class="username interior-elem">
+                                  {{ message["nickname"] }}
+                                </span>
+                                <small class="timestamp text-muted interior-elem">
                                   <i class="fa fa-clock-o interior-elem"></i>
                                   {{ message["sendTimestamp"] }}
                                 </small>
                               </div>
                               {% if message['username'] is None %}
-                              <p class="interior-elem" style="font-style: italic; color: green;"><b>System:</b> {{ message["content"] }}</p>
+                                <p class="interior-elem" style="font-style: italic; color: green;">
+                                  <b>System:</b> {{ message["content"] }}
+                                </p>
                               {% else %}
-                              <p class="interior-elem" style="font-style: italic;"><b>{{ message["username"] }}:</b> {{ message["content"] }}</p>
+                                <p class="interior-elem" style="font-style: italic;">
+                                  <b>{{ message["username"] }}:</b> {{ message["content"] }}
+                                </p>
                               {% endif %}
                             </div>
                           </li>
                         {% endfor %}
                       </ul>
                     </div>
-                    <div class="slimScrollBar"
-                      style="width: 7px; position: absolute; top: 0px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; right: 1px; height: 478.639px; background: rgb(0, 0, 0);">
-                    </div>
-                    <div class="slimScrollRail"
-                      style="width: 7px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; opacity: 0.2; z-index: 90; right: 1px; background: rgb(51, 51, 51);">
-                    </div>
+                    <div class="slimScrollBar" style="width: 7px; position: absolute; top: 0px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; right: 1px; height: 478.639px; background: rgb(0, 0, 0);"></div>
+                    <div class="slimScrollRail" style="width: 7px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; opacity: 0.2; z-index: 90; right: 1px; background: rgb(51, 51, 51);"></div>
                   </div>
                 </div>
               </div>
               <div class="col-md-8" style="margin-top: 20px;">
-                <div style="font-size: 36px; text-align: center;">No Chat Open</div>
+                <div style="font-size: 36px; text-align: center;">
+                  No Chat Open
+                </div>
               </div>
             </div>
           </div>
@@ -70,7 +85,7 @@
       height: 510px;
       overflow-y: auto;
     }
-    
+
     .negative-button {
       color: red;
     }
@@ -502,9 +517,9 @@
     }
   </style>
   <script type="text/javascript">
-  $(function () {
-    $(".chat-list-wrapper, .message-list-wrapper").niceScroll();
-  })
+    $(function () {
+      $(".chat-list-wrapper, .message-list-wrapper").niceScroll();
+    })
   </script>
   <script>
     function loadGroup(event) {

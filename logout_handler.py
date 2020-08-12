@@ -1,12 +1,8 @@
 import os
-import json
-import time
 import logging
-from datetime import datetime
 import boto3
-import botocore
 import definitions
-from chat_utilities import _build_response, _build_response_detailed, _fetch_body, _send_to_connection
+from chat_utilities import _build_response, _build_response_detailed, _send_to_connection
 
 logger = logging.getLogger("logout_handler")
 logger.setLevel(logging.DEBUG)
@@ -20,14 +16,14 @@ s3 = boto3.resource('s3')
 
 action = "logout"
 
-def logout (event, context):
+def logout(event, context):
   """
   Handles a logout request via WebSocket
   """
   logger.info("Login request via WebSocket")
-  logger.debug("event: {}".format(str(event)))
+  logger.debug("event: {}", str(event))
   connectionID = event["requestContext"].get("connectionId")
-  logger.debug("connectionID: {}".format(connectionID))
+  logger.debug("connectionID: {}", connectionID)
 
   # Query the connections Table and remove the current user
   connections_table = dynamodb.Table(definitions.Connections.TABLE_NAME)
@@ -37,7 +33,7 @@ def logout (event, context):
       definitions.Connections.CONNECTION_ID: connectionID
     },
     UpdateExpression="set {} = {}".format(
-      definitions.Connections.USERNAME, 
+      definitions.Connections.USERNAME,
       local_var
     ),
     ExpressionAttributeValues={
@@ -45,7 +41,7 @@ def logout (event, context):
     },
     ReturnValues="UPDATED_OLD"
   )
-  logger.debug("Result: {}".format(result))
+  logger.debug("Result: {}", result)
   # If there was a current user, remove the connection ID from the user Table
   if result['ResponseMetadata']['HTTPStatusCode'] == 200 and 'Attributes' in result:
     if definitions.Connections.USERNAME in result['Attributes']:
@@ -67,12 +63,12 @@ def logout (event, context):
           },
           ReturnValues="UPDATED_NEW"
         )
-        logger.debug("Updated result: {}".format(result))
+        logger.debug("Updated result: {}", result)
   else:
-    logger.error("Connections table not properly updated - result: {}".format(result))
+    logger.error("Connections table not properly updated - result: {}", result)
     _send_to_connection(connectionID, _build_response_detailed(500, action, "Internal server error"), event)
     return _build_response(500, "Internal server error")
-  # TODO: Send the login page to the client
+  # Send the login page to the client
   obj = s3.Object('chat-application-upload-bucket-11097', 'login_page.html')
   body = obj.get()["Body"].read().decode("utf-8")
   _send_to_connection(connectionID, _build_response_detailed(200, action, body), event)

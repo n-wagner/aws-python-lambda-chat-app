@@ -7,7 +7,7 @@ node_modules/
 package-lock.json
 
 # Serverless directories
-.serverless
+.serverless/
 .dynamodb/
 offline/dynamodb
 buckets/
