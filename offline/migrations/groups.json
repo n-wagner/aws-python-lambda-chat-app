@@ -1,0 +1,29 @@
+{
+  "Table": {
+    "TableName": "groups",
+    "KeySchema": [
+      {
+        "AttributeName": "groupID",
+        "KeyType": "HASH"
+      },
+      {
+        "AttributeName": "username",
+        "KeyType": "RANGE"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "groupID",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "username",
+        "AttributeType": "S"
+      }
+    ],
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    }
+  }
+}

@@ -1,0 +1,361 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: chat-application
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+    environment:
+        IS_OFFLINE: true
+    name: aws
+    logs:
+        websocket: true
+    runtime: python3.8
+    websocketApiName: serverless-chat-api
+    websocketApiRouteSelectionExpression: $request.body.action
+    iamRoleStatements:
+        # Allow management of WebSocket connections
+        - Effect: Allow
+          Action:
+              - "execute-api:ManageConnections"
+          Resource:
+              - "arn:aws:execute-api:*:*:**/@connections/*"
+        # Allows lambda functions to invoke others
+        - Effect: Allow
+          Action:
+              - "lambda:InvokeFunction"
+          Resource:
+              - "arn:aws:lambda:us-east-1:*:function:*"
+        # Allow read access to all s3 buckets
+        - Effect: Allow
+          Action:
+              - "s3:GetObject"
+          Resource:
+              - "arn:aws:s3:::**/*"
+        # Allow access to all dynamodb tables
+        - Effect: Allow
+          Action:
+              - "dynamodb:PutItem"
+              - "dynamodb:GetItem"
+              - "dynamodb:UpdateItem"
+              - "dynamodb:DeleteItem"
+              - "dynamodb:BatchGetItem"
+              - "dynamodb:BatchWriteItem"
+              - "dynamodb:Scan"
+              - "dynamodb:Query"
+          Resource:
+              - "arn:aws:dynamodb:us-east-1:*:*"
+
+plugins:
+    - serverless-s3-sync
+    - serverless-offline
+    - serverless-dynamodb-local
+    - serverless-s3-local
+    - serverless-python-requirements
+
+custom:
+    usersTableName: users
+    connectionsTableName: connections
+    groupsTableName: groups
+    statesTableName: states
+    messagesTableName: messages
+    pythonRequirements:
+        #dockerizePip: true
+        noDeploy: []
+    s3Sync:
+        - bucketName: chat-application-upload-bucket-11097
+          localDir: UploadData
+        - bucketName: chat-application-static-site-bucket-11097
+          localDir: static
+    dynamodb:
+        stages:
+            - dev
+        start:
+            port: 8000
+            inMemory: true
+            # inMemory: false
+            # dbPath: offline/dynamodb
+            migrate: true
+        migration:
+            dir: offline/migrations
+# you can overwrite defaults here
+#  stage: dev
+#  region: us-east-1
+
+# you can add statements to the Lambda function's IAM Role here
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:PutObject"
+#      Resource:
+#        Fn::Join:
+#          - ""
+#          - - "arn:aws:s3:::"
+#            - "Ref" : "ServerlessDeploymentBucket"
+#            - "/*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.py
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.py
+#    - exclude-me-dir/**
+
+functions:
+    connectionManagement:
+        handler: connection_handler.connection_manager
+        events:
+            - websocket:
+                route: $connect
+            - websocket:
+                route: $disconnect
+    defaultManagement:
+        handler: default_message_handler.default_message
+        events:
+            - websocket:
+                route: $default
+    login:
+        handler: login_handler.login
+        events:
+            - websocket:
+                route: login
+    logout:
+        handler: logout_handler.logout
+        events:
+            - websocket:
+                route: logout
+    createUser:
+        handler: create_user_handler.create_user
+        events:
+            - websocket:
+                route: createUser
+    createGroup:
+        handler: create_group_handler.create_group
+        events:
+            - websocket:
+                route: createGroup
+    getGroup:
+        handler: get_group_handler.get_group
+        events:
+            - websocket:
+                route: getGroup
+    sendMessage:
+        handler: send_message_handler.send_message
+        events:
+            - websocket:
+                route: sendMessage
+    fetchGroups:
+        handler: fetch_groups_handler.fetch_groups
+        events:
+            - websocket:
+                route: fetchGroups
+    getRecentMessages:
+        handler: get_recent_messages_handler.get_recent_messages
+        events:
+            - websocket:
+                route: getRecentMessages
+    fetchCreateGroupPage:
+        handler: fetch_create_group_page_handler.fetch_create_group_page
+        events:
+            - websocket:
+                route: fetchCreateGroupPage
+    leaveGroup:
+        handler: leave_group_handler.leave_group
+        events:
+            - websocket:
+                route: leaveGroup
+    fullActiveMessageRender:
+        handler: full_active_message_render_handler.full_active_message_render
+    sideMessageRender:
+        handler: side_message_render_handler.side_message_render
+    fetchChatRender:
+        handler: fetch_chat_render_handler.fetch_chat_render
+    activePaneRender:
+        handler: active_pane_render_handler.active_pane_render
+    ping:
+        handler: ping_handler.ping
+        events:
+            - http:
+                path: ping
+                method: get
+
+resources:
+  Resources:
+    StaticSiteBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: chat-application-static-site-bucket-11097
+        AccessControl: PublicRead
+        WebsiteConfiguration:
+          IndexDocument: index.html
+    StaticSiteS3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: StaticSiteBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - s3:GetObject
+              Resource:
+                Fn::Join: [
+                  "", [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "StaticSiteBucket"
+                    },
+                    "/*"
+                  ]
+                ]
+    DemoBucketUpload:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: chat-application-upload-bucket-11097
+    UsersDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.usersTableName}
+        AttributeDefinitions: 
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    ConnectionsDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.connectionsTableName}
+        AttributeDefinitions: 
+          - AttributeName: connectionID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    GroupsDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.groupsTableName}
+        AttributeDefinitions: 
+          - AttributeName: groupID
+            AttributeType: S
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: groupID
+            KeyType: HASH
+          - AttributeName: username
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    # StatesDynamoDbTable:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     TableName: ${self:custom.statesTableName}
+    #     AttributeDefinitions: 
+    #       - AttributeName: groupID
+    #         AttributeType: S
+    #       - AttributeName: username
+    #         AttributeType: S
+    #     KeySchema:
+    #       - AttributeName: groupID
+    #         KeyType: HASH
+    #       - AttributeName: username
+    #         KeyType: RANGE
+    #     BillingMode: PAY_PER_REQUEST
+    MessagesDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.messagesTableName}
+        AttributeDefinitions: 
+          - AttributeName: groupID
+            AttributeType: S
+          - AttributeName: sendTimestamp
+            AttributeType: N
+        KeySchema:
+          - AttributeName: groupID
+            KeyType: HASH
+          - AttributeName: sendTimestamp
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+#    The following are a few example events you can configure
+#    NOTE: Please make sure to change your handler code to work with those events
+#    Check the event documentation for details
+#    events:
+#      - http:
+#          path: users/create
+#          method: get
+#      - websocket: $connect
+#      - s3: ${env:BUCKET}
+#      - schedule: rate(10 minutes)
+#      - sns: greeter-topic
+#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
+#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
+#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
+#      - iot:
+#          sql: "SELECT * FROM 'some_topic'"
+#      - cloudwatchEvent:
+#          event:
+#            source:
+#              - "aws.ec2"
+#            detail-type:
+#              - "EC2 Instance State-change Notification"
+#            detail:
+#              state:
+#                - pending
+#      - cloudwatchLog: '/aws/lambda/hello'
+#      - cognitoUserPool:
+#          pool: MyUserPool
+#          trigger: PreSignUp
+#      - alb:
+#          listenerArn: arn:aws:elasticloadbalancing:us-east-1:XXXXXX:listener/app/my-load-balancer/50dc6c495c0c9188/
+#          priority: 1
+#          conditions:
+#            host: example.com
+#            path: /hello
+
+#    Define function environment variables here
+#    environment:
+#      variable2: value2
+
+# you can add CloudFormation resource templates here
+#resources:
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-bucket
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"

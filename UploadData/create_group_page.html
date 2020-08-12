@@ -1,0 +1,147 @@
+<h2>Create Group</h2>
+<div class="container">
+  <button class="addUser" onclick="addUser();">Add User</button>
+</div>
+<div class="container" id="main-container">
+  <label for="gName"><b>Group Name:</b></label>
+  <input type="text" placeholder="Enter group name" id="gName" required>
+  <p class="validation" hidden style="font-size: 11px; color: red;">Please enter a group name</p>
+  <p></p>
+  <div id="users">
+    <div>
+      <label for="user1"><b>New Username:</b></label>
+      <input type="text" placeholder="Enter username" id="user1" required>
+      <p class="validation" hidden style="font-size: 11px; color: red;">Invalid username</p>
+    </div>
+  </div>
+</div>
+<div class="container">
+  <button type="submit" class="submit" onclick="createGroup();">Create</button>
+  <button class="cancel" onclick="cancel();">Cancel</button>
+</div>
+<style>
+  body {font-family: Arial, Helvetica, sans-serif;}
+  input {
+    width: 70%;
+    padding: 12px 20px;
+    margin: 10px 15px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+
+  .container {
+    padding: 16px;
+    width: 50%;
+  }
+
+  button {
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+  }
+
+  button.submit {
+    background-color: #4CAF50;
+    width: 25%;
+  }
+
+  button.cancel {
+    background-color: red;
+    width: 25%;
+  }
+
+  button.addUser {
+    background-color: rgb(54, 116, 233);
+    width: 12.5%;
+  }
+
+  button.removeUser {
+    background-color: red;
+    width: 12.5%;
+  }
+  
+  button:hover {
+    opacity: 0.8;
+  }
+
+  span.user1 {
+    float: right;
+    padding-top: 16px;
+  }
+</style>
+<script>
+  var count = 1;
+
+  function addUser () {
+    count += 1;
+    $("#users").append('<div><label for="user' + count + '"><b>New Username:</b></label> <input type="text" placeholder="Enter username" id="user' + count + '"><button class="removeUser" onclick="removeUser(event);">Remove</button><p class="validation" hidden style="font-size: 11px; color: red;">Invalid username</p></div>');
+  }
+
+  function removeUser (event) {
+    target = event.target;
+    target.parentElement.remove();
+  }
+
+  function is_valid_group () {
+    $('.validation').attr("hidden", function(index, attr) {
+      return attr = "hidden";
+    });
+    ok = true;
+    users = $("#users input");
+    users_validation = $("#users p");
+    console.log(users);
+    group = $("#gName");
+    if (group.val() <= 0) {
+      ok = false;
+      group.next().attr("hidden", function(index, attr) {
+        return attr = null;
+      });
+    }
+    for (var i = 0; i < users.length; i++) {
+      var user = $(users[i]);
+      console.log(user.val());
+      console.log(user.val().legnth);
+      if (user.val().length <= 0) {
+        ok = false;
+        $(users_validation[i]).attr("hidden", function(index, attr) {
+          return attr = null;
+        });
+      }
+    }
+    return ok;
+  }
+
+  function createGroup () {
+    console.log("create group");
+    if (!is_valid_group()) {
+      return;
+    }
+    users_validation = $("#users p");
+    users = $("#users input");
+    users_list = [];
+    console.log(users);
+    group_name = group = $("#gName").val();
+    console.log(group_name);
+    for (var i = 0; i < users.length; i++) {
+      var user = users[i];
+      var user_validation = users_validation[i];
+      console.log(user);
+      console.log(user_validation);
+      user_validation.id = user.value;
+      console.log("user_id: " + user_validation.id);
+      users_list.push(user.value);
+    }
+    console.log(users_list);
+    data = {"action": "createGroup", "nickname": group_name, "users": JSON.stringify(users_list)};
+    socket.send(JSON.stringify(data));
+  }
+
+  function cancel () {
+    console.log("cancelled");
+    info = {"action": "fetchGroups"};
+    socket.send(JSON.stringify(info));
+  }
+</script>

@@ -1,0 +1,17 @@
+{
+  "name": "chat-application",
+  "description": "user to user chat application",
+  "version": "0.1.0",
+  "dependencies": {
+    "aws-sdk": "^2.668.0",
+    "serverless-s3-sync": "^1.12.0"
+  },
+  "devDependencies": {
+    "serverless-dynamodb-local": "^0.2.39",
+    "serverless-offline": "^6.1.4",
+    "serverless-python-requirements": "^5.1.0",
+    "serverless-s3-local": "^0.6.0",
+    "serverless-websockets-plugin": "^1.0.0"
+  },
+  "author": "n-wagner"
+}

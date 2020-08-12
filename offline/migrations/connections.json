@@ -1,0 +1,21 @@
+{
+  "Table": {
+    "TableName": "connections",
+    "KeySchema": [
+      {
+        "AttributeName": "connectionID",
+        "KeyType": "HASH"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "connectionID",
+        "AttributeType": "S"
+      }
+    ],
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    }
+  }
+}
