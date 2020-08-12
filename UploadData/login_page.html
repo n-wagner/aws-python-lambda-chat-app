@@ -1,0 +1,62 @@
+<h2>Chat App Login</h2>
+  <div class="container">
+    <p id="no-username-password-signup" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Non-unique username</p>
+    <p id="no-username-password" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Invalid username/password</p>
+    <label for="uname"><b>Username</b></label>
+    <input type="text" placeholder="Enter Username" id="uname" required>
+    <p id="no-username" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Please enter a username</p>
+    <p id="taken-username" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Username taken</p>
+
+    <label for="psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Password" id="psw" required>
+    <p id="no-password" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Please enter a password greater than 6 characters</p>
+        
+    <button type="submit" onclick="login();">Login</button>
+    <button type="button" class="signupbtn" onclick="signup();">Sign Up</button>
+  </div>
+<style>
+  body {font-family: Arial, Helvetica, sans-serif;}
+  form {
+    border: 3px solid #f1f1f1;
+    width: 50%;
+  }
+  
+  input[type=text], input[type=password] {
+    width: 95%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  
+  button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 95%;
+  }
+  
+  button:hover {
+    opacity: 0.8;
+  }
+  
+  .signupbtn {
+    width: 95%;
+    padding: 14px 20px;
+    background-color: #3297cb;
+  }
+  
+  .container {
+    padding: 16px;
+    width: 50%;
+  }
+  
+  span.psw {
+    float: right;
+    padding-top: 16px;
+  }
+</style>

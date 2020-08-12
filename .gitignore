@@ -1,3 +1,17 @@
+# Miscelleaneous
+.vscode/
+.pylintrc
+
+# NodeJS
+node_modules/
+package-lock.json
+
+# Serverless directories
+.serverless
+.dynamodb/
+offline/dynamodb
+buckets/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

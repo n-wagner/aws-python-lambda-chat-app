@@ -1,0 +1,106 @@
+<div class="group-region" id="{{ groupID }}">
+  <div style="font-size: 24px; font-weight: bold;">{{ nickname }}</div>
+  <div style="font-size: 12px; font-weight: normal;">{% for user in group_users %}{{ user }}; {% endfor %}</div>
+  <div {% if left %}hidden disabled{% endif %} class="compose-area" style="margin-right: 15px; margin-bottom: 35px;"> <div class="btn btn-default negative-button" onclick="leaveGroup();"><i
+    class="fa fa-sign-out"></i> Leave Group</div></div>
+</div>
+<div>
+  <div class="slimScrollDiv"
+    style="position: relative; overflow: hidden; width: auto; height: 475px;">
+    <div class="message-list-wrapper" style="overflow-y: auto; width: auto; height: 475px;">
+      <ul class="message-list">
+        <li class="text-center"> <div class="btn btn-default" onclick="loadMoreMessages();">Load More Messages</div></li>
+        {% for message_group in all_messages %}
+          {% if message_group[0]['username'] is None %}
+          <li class="text-center message-item active-chat-message" style="font-size: 12px; font-style: italic; color: green;">{{ message_group[0]['content'] }}</li>
+          {% else %}
+            {% if message_group[0]['username'] == current_user %}
+            <li class= "right active-chat-message"> 
+            {% else %}
+            <li class= "left active-chat-message"> 
+            {% endif %}
+              <span class="username">{{ message_group[0]['username'] }}</span> 
+              <small class="timestamp"> 
+                {{ message_group[0]['username'] }} <br>
+                <iclass="fa fa-clock-o"></i>
+                {{ message_group[0]['sendTimestamp'] }} 
+              </small> 
+              <div class="body">
+                <div class="message-item message well well-sm">{{ message_group[0]['content'] }}</div>
+                {% for message in message_group %}
+                {% if not loop.first %}
+                <div class="clearfix"></div>
+                <div class="message-item message well well-sm">{{ message['content'] }}</div>
+                {% endif %}
+                {% endfor %}
+              </div>
+          {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="slimScrollBar"
+      style="width: 7px; position: absolute; top: 265px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; right: 1px; height: 187.092px; background: rgb(0, 0, 0);">
+    </div>
+    <div class="slimScrollRail"
+      style="width: 7px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; opacity: 0.2; z-index: 90; right: 1px; background: rgb(51, 51, 51);">
+    </div>
+  </div>
+  <div class="compose-box">
+    <div class="row">
+      <div class="col-xs-12 mg-btm-10">
+        <textarea {% if left %}disabled{% endif %} id="btn-input" class="form-control input-sm"
+          placeholder="Type your message here..." onkeydown="keyFunction(event);"></textarea></div>
+      <div class="col-xs-8"> 
+      </div>
+      <div class="col-xs-4"> 
+        <button {% if left %}disabled{% endif %} class="btn btn-green btn-sm pull-right" onclick="sendMessage(event);"> <i
+            class="fa fa-location-arrow"></i> Send </button></div>
+    </div>
+  </div>
+  <script>
+    function leaveGroup () {
+      console.log("leave group");
+      var group_id = $('.group-region').attr("id");
+      console.log("Group_id: " + group_id);
+      data = {"action": "leaveGroup", "groupID": group_id};
+      socket.send(JSON.stringify(data));
+    }
+
+    function loadMoreMessages () {
+      // -1 to account for the load messages button itself
+      console.log("load more messages");
+      var message_num = $(".message-item").length;
+      var group_id = $('.group-region').attr("id");
+      console.log("count: " + message_num + " group_id: " + group_id);
+      data = {"action": "getRecentMessages", "groupID": group_id, "count": message_num};
+      socket.send(JSON.stringify(data));
+    }
+
+    function keyFunction (event) {
+      console.log(event)
+      var message = $('textarea').val();
+      var group_id = $('.group-region').attr("id");
+      console.log("Message: " + message + " length: " + message.length + " group_id: " + group_id);
+      if (event.keyCode === 13 && message.length > 0) {
+        console.log("send message");
+        data = {"action": "sendMessage", "content": message, "groupID": group_id};
+        socket.send(JSON.stringify(data));
+        $('textarea').val("");
+      }
+    }
+
+    function sendMessage (event) {
+      console.log(event);
+      var message = $('textarea').val();
+      var group_id = $('.group-region').attr("id");
+      console.log("Message: " + message + " length: " + message.length + " group_id: " + group_id);
+      if (message.length > 0) {
+        console.log("send message");
+        data = {"action": "sendMessage", "content": message, "groupID": group_id};
+        socket.send(JSON.stringify(data));
+        $('textarea').val("");
+      }
+    }
+  </script>
+</div>

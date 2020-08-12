@@ -1,0 +1,29 @@
+{
+  "Table": {
+    "TableName": "messages",
+    "KeySchema": [
+      {
+        "AttributeName": "groupID",
+        "KeyType": "HASH"
+      },
+      {
+        "AttributeName": "sendTimestamp",
+        "KeyType": "RANGE"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "groupID",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "sendTimestamp",
+        "AttributeType": "N"
+      }
+    ],
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    }
+  }
+}

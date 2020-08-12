@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title itemprop="name">Chat Application</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="description" content="Application for Chatting">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.nicescroll/3.6.8-fix/jquery.nicescroll.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+    integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+    crossorigin="anonymous"></script>
+  <script>
+    function handle_login_signup_response (data) {
+      if (data["statusCode"] === 200) {
+        info = {"action": "fetchGroups"};
+        socket.send(JSON.stringify(info));
+      } else {
+        if (data["action"] === "login") {
+          $('#no-username-password').attr("hidden", function(index, attr) {
+            return attr = null;
+          });
+        } else {
+          $('#no-username-password-signup').attr("hidden", function(index, attr) {
+            return attr = null;
+          });
+        }
+      }
+    }
+
+    function handle_fetch_groups (data) {
+      // TODO: Check that status is 200
+      $("body").html(data["body"]);
+    }
+
+    function handle_get_group (data) {
+      // TODO: Check that status is 200
+      body = JSON.parse(data["body"]);
+      console.log(body);
+      $(".col-md-8").html(body["html"]);
+      $(".active").removeClass("active");
+      console.log("sel: #" + body["group"] + ":parent");
+      var sel = $("#" + body["group"]).parent();
+      sel.addClass("active");
+      $(".active-chat-message").last()[0].scrollIntoView();
+    }
+
+    function handle_fetch_create_group_page (data) {
+      // TODO: Check that status is 200
+      $("body").html(data["body"]);
+    }
+
+    function handle_create_group (data) {
+      console.log("status: " + data["statusCode"]);
+      if (data["statusCode"] === 200) {
+        info = {"action": "fetchGroups"};
+        socket.send(JSON.stringify(info));
+      } else {
+        invalid_users = data["body"];
+        console.log(invalid_users);
+        // for (var i = 0; i < invalid_users.length; i++) {
+        //   $("#" + invalid_users[i]).attr("hidden", function(index, attr) {
+        //     return attr = null;
+        //   });
+        // }
+      }
+    }
+
+    function handle_send_message (data) {
+      var group_side_panel = $("#" + data["body"]["group"]).parent();
+      console.log(group_side_panel);
+      console.log("sel: #" + data["body"]["group"] + ":parent");
+      var active_set = false;
+      if (group_side_panel.hasClass("active")) {
+        elem = $(data["body"]["activeMessage"])
+        $(".message-list").append(elem);
+        elem[0].scrollIntoView();
+        active_set = true;
+      }
+      group_side_panel.remove();
+      elem = $(data["body"]["sideMessage"]);
+      $(".chat-list").prepend(elem);
+      elem[0].scrollIntoView();
+      if (active_set === true) {
+        $("#" + data["body"]["group"]).parent().removeClass("new");
+        $("#" + data["body"]["group"]).parent().addClass("active");
+      }
+    }
+
+    function handle_init (data) {
+      console.log("group init");
+      elem = $(data["body"]);
+      console.log(elem);
+      $(".chat-list").prepend(elem);
+      elem[0].scrollIntoView();
+    }
+
+    function handle_get_recent_messages (data) {
+      if (data["statusCode"] === 200) {
+        //$(".message-list li:nth-child(2)").prepend(data["body"]);
+        elem = $(data["body"]);
+        old_elem = $(".message-list li:eq(0)");
+        old_elem.after(elem);
+        old_elem[0].scrollIntoView();
+        //message-list
+      }
+    }
+
+    function handle_leave_group (data) {
+      if (data["statusCode"] === 200) {
+        var group_id = $('.group-region').attr("id");
+        console.log("group_id: "+ group_id);
+        data = {"action": "getGroup", "groupID": group_id};
+        socket.send(JSON.stringify(data));
+      } else {
+        console.log("Leave Group unsuccessful - status: " + data["statusCode"]);
+      }
+    }
+
+    function handle_logout (data) {
+      // TODO: Check that status is 200
+      $("body").html(data["body"]);
+    }
+    
+    var socket;
+    
+    function setUpWebSocket () {
+      console.log("socket");
+      socket = new WebSocket("wss://fsi4n4hth3.execute-api.us-east-1.amazonaws.com/dev");
+      socket.onopen = function(event) {
+        console.log('connected')
+        //data = {"action": "getRecentMessages"};
+        //socket.send(JSON.stringify(data));
+      };
+      socket.onmessage = function(message) {
+        // var data = JSON.parse(message.data);
+        console.log(message);
+        var data = JSON.parse(message.data);
+        console.log(data);
+        if (data.hasOwnProperty("action")) {
+          if (data["action"] === "login" || data["action"] === "createUser") {
+            handle_login_signup_response(data);
+          } else if (data["action"] === "fetchGroups") {
+            handle_fetch_groups(data);
+          } else if (data["action"] === "getGroup") {
+            handle_get_group(data);
+          } else if (data["action"] === "fetchCreateGroupPage") {
+            handle_fetch_create_group_page(data);
+          } else if (data["action"] === "createGroup") {
+            handle_create_group(data);
+          } else if (data["action"] === "sendMessage") {
+            handle_send_message(data);
+          } else if (data["action"] === "init") {
+            handle_init(data);
+          } else if (data["action"] === "getRecentMessages") {
+            handle_get_recent_messages(data);
+          } else if (data["action"] === "leaveGroup") {
+            handle_leave_group(data);
+          } else if (data["action"] === "logout") {
+            handle_logout(data);
+          } else {
+            console.log("Unrecognized action: " + data["action"]);
+          }
+        } else {
+          console.log("Internal Server Error")
+          //Fetch login page? (Attempt logout)
+        }
+        // data["messages"].forEach(function(message) {
+        //   // if ($("#message-container").children(0).attr("id") == "empty-message") {
+        //   //           $("#message-container").empty();
+        //   //       }
+        //   //       if (message["username"] === username) {
+        //   //           $("#message-container").append("<div class='message self-message'><b>(You)</b> " + message["content"]);
+        //   //       } else {
+        //   //           $("#message-container").append("<div class='message'><b>(" + message["username"] + ")</b> " + message["content"]);
+        //   //       }
+        //   //       $("#message-container").children().last()[0].scrollIntoView();
+        // });
+      };
+    }
+    
+    function is_valid () {
+      $('.validation').attr("hidden", function(index, attr) {
+          return attr = "hidden";
+      });
+      var ok = true;
+      console.log('validate');
+      var uname = $('#uname').val();
+      var pass = $('#psw').val();
+      console.log("username: " + uname + " password: " + pass);
+      if (uname.length <= 0) {
+        ok = false;
+        $('#no-username').attr("hidden", function(index, attr) {
+          return attr = null;
+        });
+      }
+      if (pass.length <= 6) {
+        ok = false;
+        $('#no-password').attr("hidden", function(index, attr) {
+          return attr = null;
+        });
+      }
+      return ok;
+    }
+    
+    function login() {
+      console.log("login");
+      if (!is_valid()) {
+        return;
+      }
+      data = {
+        "action": "login",
+        "username": $('#uname').val(),
+        "password": $('#psw').val()
+      };
+      socket.send(JSON.stringify(data))
+    }
+    
+    function signup () {
+      console.log("signup");
+      if (!is_valid()) {
+        return;
+      }
+      data = {
+        "action": "createUser",
+        "username": $('#uname').val(),
+        "password": $('#psw').val()
+      };
+      socket.send(JSON.stringify(data))
+    }
+    </script>
+</head>
+<body onload="setUpWebSocket();">
+
+<h2>Chat App Login</h2>
+
+<!--<form id="my-form" onsubmit="fun();">-->
+
+  <div class="container">
+    <p id="no-username-password-signup" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Non-unique username</p>
+    <p id="no-username-password" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Invalid username/password</p>
+    <label for="uname"><b>Username</b></label>
+    <input type="text" placeholder="Enter Username" id="uname" required>
+    <p id="no-username" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Please enter a username</p>
+    <p id="taken-username" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Username taken</p>
+
+    <label for="psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Password" id="psw" required>
+    <p id="no-password" class="validation" hidden style="font-size: 11px; padding-bottom: 20px; color: red;">Please enter a password greater than 6 characters</p>
+        
+    <button type="submit" onclick="login();">Login</button>
+    <button type="button" class="signupbtn" onclick="signup();">Sign Up</button>
+  </div>
+
+    
+<!--</form>-->
+<style>
+  body {font-family: Arial, Helvetica, sans-serif;}
+  form {
+    border: 3px solid #f1f1f1;
+    width: 50%;
+  }
+  
+  input[type=text], input[type=password] {
+    width: 95%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  
+  button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 95%;
+  }
+  
+  button:hover {
+    opacity: 0.8;
+  }
+  
+  .signupbtn {
+    width: 95%;
+    padding: 14px 20px;
+    background-color: #3297cb;
+  }
+  
+  .container {
+    padding: 16px;
+    width: 50%;
+  }
+  
+  span.psw {
+    float: right;
+    padding-top: 16px;
+  }
+  </style>
+</body>
+</html>
